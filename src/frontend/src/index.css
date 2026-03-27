@@ -1,0 +1,175 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+    /* Premium light theme */
+    --background: 0.98 0.003 240;
+    --foreground: 0.15 0.02 240;
+    --card: 1 0 0;
+    --card-foreground: 0.15 0.02 240;
+    --popover: 1 0 0;
+    --popover-foreground: 0.15 0.02 240;
+    --primary: 0.55 0.18 240;
+    --primary-foreground: 1 0 0;
+    --secondary: 0.95 0.008 240;
+    --secondary-foreground: 0.25 0.02 240;
+    --muted: 0.94 0.008 240;
+    --muted-foreground: 0.5 0.02 240;
+    --accent: 0.92 0.01 240;
+    --accent-foreground: 0.25 0.02 240;
+    --destructive: 0.628 0.258 25;
+    --destructive-foreground: 1 0 0;
+    --border: 0.88 0.012 240;
+    --input: 0.88 0.012 240;
+    --ring: 0.55 0.18 240;
+    --chart-1: 0.55 0.18 240;
+    --chart-2: 0.696 0.17 162;
+    --chart-3: 0.769 0.188 70;
+    --chart-4: 0.627 0.265 303;
+    --chart-5: 0.645 0.246 16;
+    --sidebar: 0.97 0.005 240;
+    --sidebar-foreground: 0.15 0.02 240;
+    --sidebar-primary: 0.55 0.18 240;
+    --sidebar-primary-foreground: 1 0 0;
+    --sidebar-accent: 0.93 0.01 240;
+    --sidebar-accent-foreground: 0.25 0.02 240;
+    --sidebar-border: 0.88 0.012 240;
+    --sidebar-ring: 0.55 0.18 240;
+    /* Custom tokens */
+    --accent-blue: 0.55 0.18 240;
+    --accent-teal: 0.65 0.14 192;
+    --accent-purple: 0.558 0.22 293;
+    --status-amber: 0.65 0.14 64;
+    --status-green: 0.55 0.17 142;
+    --status-red: 0.628 0.258 25;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Poppins", "Inter", system-ui, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+@layer utilities {
+  .font-inter {
+    font-family: "Inter", system-ui, sans-serif;
+  }
+
+  .font-poppins {
+    font-family: "Poppins", system-ui, sans-serif;
+  }
+
+  .gradient-brand {
+    background: linear-gradient(
+      135deg,
+      oklch(0.55 0.18 240),
+      oklch(0.558 0.22 293)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Light card - white with soft shadow */
+  .card-glass {
+    background: oklch(1 0 0);
+    box-shadow: 0 2px 16px 0 oklch(0 0 0 / 0.06), 0 1px 4px 0
+      oklch(0 0 0 / 0.04);
+    border: 1px solid oklch(0.9 0.01 240);
+  }
+
+  .glow-bg {
+    background: radial-gradient(
+      ellipse at 50% 0%,
+      oklch(0.55 0.18 240 / 0.06) 0%,
+      transparent 65%
+    );
+  }
+
+  .otp-gradient-border {
+    position: relative;
+    border-radius: 20px;
+  }
+  .otp-gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    padding: 1.5px;
+    background: linear-gradient(
+      135deg,
+      oklch(0.55 0.18 240),
+      oklch(0.558 0.22 293)
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: destination-out;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Navy classes mapped to light equivalents */
+  .bg-navy {
+    background-color: oklch(0.97 0.005 240);
+  }
+
+  .bg-navy-light {
+    background-color: oklch(1 0 0);
+  }
+
+  .pulse-recording {
+    animation: pulse-red 1.2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-red {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 0 0 oklch(0.628 0.258 25 / 0.5);
+    }
+    50% {
+      opacity: 0.85;
+      transform: scale(0.9);
+      box-shadow: 0 0 0 6px oklch(0.628 0.258 25 / 0);
+    }
+  }
+
+  .audio-bar {
+    animation: audio-wave 0.8s ease-in-out infinite alternate;
+  }
+
+  @keyframes audio-wave {
+    from {
+      transform: scaleY(0.3);
+    }
+    to {
+      transform: scaleY(1);
+    }
+  }
+
+  .fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
