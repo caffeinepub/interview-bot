@@ -48,6 +48,7 @@ export default function InterviewScreen() {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mrKeepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -62,12 +63,9 @@ export default function InterviewScreen() {
   // Debounce ref for screen switch tracking — prevents double-counting
   const lastSwitchTime = useRef(0);
 
-  // AudioContext refs for mixing TTS marker + mic into one stream
+  // AudioContext refs for mixing mic into one stream
   const audioCtxRef = useRef<AudioContext | null>(null);
   const audioDestRef = useRef<MediaStreamAudioDestinationNode | null>(null);
-  // Ref to stop the currently-playing TTS oscillator (question marker tone)
-  const ttsOscillatorRef = useRef<OscillatorNode | null>(null);
-  const ttsGainRef = useRef<GainNode | null>(null);
 
   const totalQuestions = questions.length;
   const currentQuestion = questions[currentIdx];
@@ -88,23 +86,6 @@ export default function InterviewScreen() {
     if (ttsFallbackRef.current) {
       clearTimeout(ttsFallbackRef.current);
       ttsFallbackRef.current = null;
-    }
-  }, []);
-
-  // Stop any active TTS tone oscillator
-  const stopTtsTone = useCallback(() => {
-    try {
-      if (ttsOscillatorRef.current) {
-        ttsOscillatorRef.current.stop();
-        ttsOscillatorRef.current.disconnect();
-        ttsOscillatorRef.current = null;
-      }
-      if (ttsGainRef.current) {
-        ttsGainRef.current.disconnect();
-        ttsGainRef.current = null;
-      }
-    } catch (_) {
-      // ignore if already stopped
     }
   }, []);
 
@@ -169,11 +150,16 @@ export default function InterviewScreen() {
         return;
       }
 
-      // Cancel any ongoing speech, clear keep-alive, fallback, and stop previous tone
+      // Cancel any ongoing speech, clear keep-alive and fallback
       window.speechSynthesis.cancel();
       stopTtsKeepAlive();
       stopTtsFallback();
-      stopTtsTone();
+
+      // Resume AudioContext to ensure mic audio keeps flowing (fixes Hindi recording)
+      // Await AudioContext resume before TTS to ensure it is running
+      if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
+        audioCtxRef.current.resume().catch(() => {});
+      }
 
       // Build voice-assistant style announcement with question number
       const prefix = lang === "hi" ? `प्रश्न ${idx}. ` : `Question ${idx}. `;
@@ -202,46 +188,20 @@ export default function InterviewScreen() {
         utterance.lang = "en-IN";
       }
 
-      // Slower rate (0.75) for clearer pronunciation; neutral pitch sounds more natural at slow rate
-      utterance.rate = 0.75;
+      // Speech rate 0.9 — slightly slower than normal for clarity
+      utterance.rate = 0.9;
       utterance.pitch = 1.0;
       utterance.volume = 1;
-
-      // Start a low-volume marker tone through AudioContext while TTS is speaking.
-      // This embeds a gentle 440Hz signal into the mixed recording so both sides
-      // (question read-aloud + candidate answer) are captured in one audio file.
-      const audioCtx = audioCtxRef.current;
-      const dest = audioDestRef.current;
-      if (audioCtx && dest) {
-        try {
-          const gainNode = audioCtx.createGain();
-          gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime); // Very soft marker tone
-          gainNode.connect(dest);
-
-          const osc = audioCtx.createOscillator();
-          osc.type = "sine";
-          osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-          osc.connect(gainNode);
-          osc.start(audioCtx.currentTime);
-
-          ttsOscillatorRef.current = osc;
-          ttsGainRef.current = gainNode;
-        } catch (_) {
-          // AudioContext might not be available; silently skip tone
-        }
-      }
 
       utterance.onend = () => {
         stopTtsKeepAlive();
         stopTtsFallback(); // Clear safety fallback — onend fired normally
-        stopTtsTone(); // Stop marker tone when question finishes
         setIsSpeaking(false);
         onDone();
       };
       utterance.onerror = () => {
         stopTtsKeepAlive();
         stopTtsFallback();
-        stopTtsTone();
         setIsSpeaking(false);
         onDone();
       };
@@ -262,7 +222,7 @@ export default function InterviewScreen() {
 
       // Safety fallback: if onend never fires (common with Hindi voices on Chrome),
       // force-complete TTS after estimated duration + buffer.
-      // ~3 chars/sec at rate 0.75, +5s safety buffer, minimum 8s.
+      // ~3 chars/sec at rate 0.9, +5s safety buffer, minimum 8s.
       const estimatedMs = Math.max(
         8000,
         (announcement.length / (3 * utterance.rate)) * 1000 + 5000,
@@ -271,12 +231,11 @@ export default function InterviewScreen() {
         if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
         stopTtsKeepAlive();
         stopTtsFallback();
-        stopTtsTone();
         setIsSpeaking(false);
         onDone();
       }, estimatedMs);
     },
-    [lang, stopTtsKeepAlive, stopTtsFallback, stopTtsTone],
+    [lang, stopTtsKeepAlive, stopTtsFallback],
   );
 
   useEffect(() => {
@@ -285,11 +244,15 @@ export default function InterviewScreen() {
     (async () => {
       try {
         const micStream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+          },
         });
         streamRef.current = micStream;
 
-        // Try to set up AudioContext mixing (mic + TTS tone in one stream)
+        // Try to set up AudioContext mixing (mic in one stream)
         let recordStream: MediaStream = micStream;
         try {
           const audioCtx = new AudioContext();
@@ -303,7 +266,10 @@ export default function InterviewScreen() {
           micSource.connect(dest);
 
           // Use mixed destination stream for recording
-          recordStream = dest.stream;
+          // FIXED: Record from raw mic stream, NOT dest.stream
+          // AudioContext suspension (esp. during Hindi TTS) would cause dest.stream
+          // to have gaps. Raw micStream is always live regardless of AudioContext state.
+          recordStream = micStream;
         } catch (_) {
           // AudioContext not supported; fall back to plain mic stream
           audioCtxRef.current = null;
@@ -320,6 +286,12 @@ export default function InterviewScreen() {
           if (e.data.size > 0) chunksRef.current.push(e.data);
         };
         mr.start(250);
+        // Keep-alive: resume recorder if it somehow pauses (can happen on some browsers)
+        mrKeepAliveRef.current = setInterval(() => {
+          if (mediaRecorderRef.current?.state === "paused") {
+            mediaRecorderRef.current.resume();
+          }
+        }, 2000);
         mediaRecorderRef.current = mr;
         setIsRecording(true);
         spokenIdxRef.current = 0;
@@ -352,7 +324,6 @@ export default function InterviewScreen() {
       if (timerRef.current) clearInterval(timerRef.current);
       stopTtsKeepAlive();
       stopTtsFallback();
-      stopTtsTone();
       window.speechSynthesis?.cancel();
       setIsSpeaking(false);
       const mr = mediaRecorderRef.current;
@@ -370,6 +341,10 @@ export default function InterviewScreen() {
           screenSwitchCount: sc,
         });
       };
+      if (mrKeepAliveRef.current) {
+        clearInterval(mrKeepAliveRef.current);
+        mrKeepAliveRef.current = null;
+      }
       if (mr && mr.state !== "inactive") {
         mr.onstop = () => {
           if (streamRef.current)
@@ -381,24 +356,22 @@ export default function InterviewScreen() {
         doFinish();
       }
     },
-    [setState, stopTtsKeepAlive, stopTtsFallback, stopTtsTone],
+    [setState, stopTtsKeepAlive, stopTtsFallback],
   );
 
   // Cleanup AudioContext and fallback timeout on unmount
   useEffect(() => {
     return () => {
-      stopTtsTone();
       stopTtsFallback();
       audioCtxRef.current?.close().catch(() => {});
     };
-  }, [stopTtsTone, stopTtsFallback]);
+  }, [stopTtsFallback]);
 
   const goNext = useCallback(() => {
     if (navigating.current) return;
     navigating.current = true;
     stopTtsKeepAlive();
     stopTtsFallback();
-    stopTtsTone();
     window.speechSynthesis?.cancel();
     setIsSpeaking(false);
     if (timerRef.current) clearInterval(timerRef.current);
@@ -424,7 +397,6 @@ export default function InterviewScreen() {
     finishInterview,
     stopTtsKeepAlive,
     stopTtsFallback,
-    stopTtsTone,
   ]);
 
   goNextRef.current = goNext;
