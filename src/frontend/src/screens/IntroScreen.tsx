@@ -27,25 +27,25 @@ export default function IntroScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-background glow-bg flex flex-col">
+    <div className="min-h-screen bg-background glow-bg flex flex-col overflow-x-hidden">
       {/* Header */}
-      <header className="flex items-center px-4 sm:px-6 py-4 border-b border-border bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-brand-blue flex items-center justify-center">
+      <header className="flex items-center px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-brand-blue flex items-center justify-center flex-shrink-0">
             <BrainCircuit className="w-5 h-5 text-white" />
           </div>
-          <span className="text-lg font-semibold gradient-brand">
+          <span className="text-base sm:text-lg font-semibold gradient-brand truncate">
             {t.brandName}
           </span>
         </div>
-        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3 flex-shrink-0">
           <Badge className="bg-status-amber/15 text-status-amber border-status-amber/30 text-xs">
             {state.questions.length} {t.questionsLabel}
           </Badge>
           <button
             type="button"
             onClick={toggleLang}
-            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-border text-brand-blue hover:bg-secondary transition-colors shadow-sm"
+            className="text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-full bg-white border border-border text-brand-blue hover:bg-secondary transition-colors shadow-sm"
           >
             {lang === "en" ? "हिं" : "EN"}
           </button>
@@ -55,11 +55,11 @@ export default function IntroScreen() {
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-2xl space-y-4 fade-in">
           {/* Candidate Card */}
-          <div className="card-glass rounded-2xl p-5 sm:p-6">
+          <div className="card-glass rounded-2xl p-4 sm:p-5 md:p-6">
             <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
               {t.candidateProfile}
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-brand-blue/10 flex items-center justify-center flex-shrink-0">
                   <User className="w-5 h-5 text-brand-blue" />
@@ -101,7 +101,7 @@ export default function IntroScreen() {
           </div>
 
           {/* Rules Card */}
-          <div className="card-glass rounded-2xl p-5 sm:p-6">
+          <div className="card-glass rounded-2xl p-4 sm:p-5 md:p-6">
             <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
               {t.interviewGuidelines}
             </h2>
@@ -120,14 +120,14 @@ export default function IntroScreen() {
           </div>
 
           {/* Consent + CTA */}
-          <div className="card-glass rounded-2xl p-5 sm:p-6">
+          <div className="card-glass rounded-2xl p-4 sm:p-5 md:p-6">
             <div className="flex items-start gap-3 mb-5">
               <Checkbox
                 id="consent"
                 data-ocid="intro.checkbox"
                 checked={agreed}
                 onCheckedChange={(v) => setAgreed(!!v)}
-                className="mt-0.5 border-border data-[state=checked]:bg-brand-blue data-[state=checked]:border-brand-blue"
+                className="mt-0.5 border-border data-[state=checked]:bg-brand-blue data-[state=checked]:border-brand-blue flex-shrink-0"
               />
               <label
                 htmlFor="consent"
@@ -139,7 +139,7 @@ export default function IntroScreen() {
 
             <Button
               data-ocid="intro.primary_button"
-              className="w-full bg-brand-blue hover:bg-brand-blue/90 text-white font-medium h-11 disabled:opacity-40"
+              className="w-full bg-brand-blue hover:bg-brand-blue/90 text-white font-medium h-11 min-h-[44px] disabled:opacity-40"
               disabled={!agreed || requestingMic}
               onClick={handleStart}
             >

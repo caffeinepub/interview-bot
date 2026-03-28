@@ -59,14 +59,13 @@ export default function UploadScreen() {
       setProgress(5);
       await sleep(400);
 
-      // Upload audio to Google Drive first
       const fileName = `interview_${state.interviewId}_${Date.now()}.webm`;
 
       try {
         const driveRes = await uploadAudioToDrive(blob, fileName);
         if (driveRes.success && driveRes.link) {
           driveLink = driveRes.link;
-          setAudioLink(driveLink); // keep state for logic but not shown in UI
+          setAudioLink(driveLink);
         }
       } catch {
         // Drive upload optional - continue
@@ -123,16 +122,16 @@ export default function UploadScreen() {
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-  // audioLink is used internally only (saved to sheet), not shown to candidate
+  // audioLink stored internally for sheet, not shown to candidate
   void audioLink;
 
   const currentStepIdx = STEPS.findIndex((s) => s.key === step);
 
   return (
-    <div className="min-h-screen bg-background glow-bg flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-background glow-bg flex flex-col items-center justify-center p-4 overflow-x-hidden">
       <div className="w-full max-w-lg fade-in">
         {/* Brand */}
-        <div className="flex items-center justify-center gap-2 mb-10">
+        <div className="flex items-center justify-center gap-2 mb-8 sm:mb-10">
           <div className="w-9 h-9 rounded-xl bg-brand-blue flex items-center justify-center shadow-glow">
             <BrainCircuit className="w-5 h-5 text-white" />
           </div>
@@ -141,7 +140,7 @@ export default function UploadScreen() {
           </span>
         </div>
 
-        <div className="card-glass rounded-2xl p-6 sm:p-8">
+        <div className="card-glass rounded-2xl p-5 sm:p-8">
           {step === "complete" ? (
             <div className="text-center" data-ocid="upload.success_state">
               <div className="w-16 h-16 rounded-full bg-status-green/15 flex items-center justify-center mx-auto mb-4">
@@ -154,8 +153,8 @@ export default function UploadScreen() {
                 {t.submittedDesc}
               </p>
 
-              <div className="bg-secondary rounded-xl p-4 text-left">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
+              <div className="bg-secondary rounded-xl p-4 text-left space-y-2">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
                   {t.summary}
                 </p>
                 <p className="text-sm text-foreground">
@@ -168,6 +167,23 @@ export default function UploadScreen() {
                   </span>{" "}
                   {state.selectedQuestionUIDs.length} {t.of}{" "}
                   {state.questions.length}
+                </p>
+                {/* Screen switch count summary */}
+                <p className="text-sm text-foreground flex items-center gap-1.5">
+                  <span className="text-muted-foreground">
+                    Screen Switches:
+                  </span>{" "}
+                  <span
+                    className={`font-semibold ${
+                      state.screenSwitchCount >= 7
+                        ? "text-status-red"
+                        : state.screenSwitchCount > 0
+                          ? "text-status-amber"
+                          : "text-status-green"
+                    }`}
+                  >
+                    {state.screenSwitchCount}
+                  </span>
                 </p>
               </div>
             </div>
@@ -184,14 +200,14 @@ export default function UploadScreen() {
           ) : (
             <div data-ocid="upload.loading_state">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-brand-blue/10 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-brand-blue/10 flex items-center justify-center flex-shrink-0">
                   <Upload className="w-5 h-5 text-brand-blue" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h2 className="text-lg font-semibold text-foreground">
                     {t.uploadingInterview}
                   </h2>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground truncate">
                     {state.candidateName}
                   </p>
                 </div>

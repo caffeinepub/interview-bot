@@ -80,9 +80,9 @@ export default function OtpScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-background glow-bg flex flex-col items-center justify-center p-4">
-      {/* Language toggle */}
-      <div className="absolute top-4 right-4">
+    <div className="min-h-screen bg-background glow-bg flex flex-col items-center justify-center p-4 overflow-x-hidden">
+      {/* Language toggle - positioned relative to header flow, not overlapping brand */}
+      <div className="w-full max-w-md flex justify-end mb-4">
         <button
           type="button"
           onClick={toggleLang}
@@ -93,25 +93,27 @@ export default function OtpScreen() {
       </div>
 
       {/* Brand */}
-      <div className="flex items-center gap-2.5 mb-8">
+      <div className="flex items-center gap-2.5 mb-6 sm:mb-8">
         <div className="w-10 h-10 rounded-xl bg-brand-blue flex items-center justify-center shadow-glow">
           <BrainCircuit className="w-6 h-6 text-white" />
         </div>
-        <span className="text-2xl font-bold gradient-brand">{t.brandName}</span>
+        <span className="text-xl sm:text-2xl font-bold gradient-brand">
+          {t.brandName}
+        </span>
       </div>
 
       {/* Card */}
       <div className="otp-gradient-border w-full max-w-md fade-in">
-        <div className="bg-white rounded-[18px] p-6 sm:p-8 shadow-card">
+        <div className="bg-white rounded-[18px] p-4 sm:p-6 md:p-8 shadow-card">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-lg bg-brand-blue/10 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-brand-blue/10 flex items-center justify-center flex-shrink-0">
               <Shield className="w-5 h-5 text-brand-blue" />
             </div>
-            <h1 className="text-xl font-semibold text-foreground">
+            <h1 className="text-lg sm:text-xl font-semibold text-foreground">
               {t.candidateVerification}
             </h1>
           </div>
-          <p className="text-muted-foreground text-sm mb-6">
+          <p className="text-muted-foreground text-sm mb-5 sm:mb-6">
             {t.enterEmailDesc}
           </p>
 
@@ -210,7 +212,7 @@ export default function OtpScreen() {
         </div>
       </div>
 
-      <p className="mt-8 text-muted-foreground text-xs text-center">
+      <p className="mt-6 sm:mt-8 text-muted-foreground text-xs text-center">
         {t.securePortal}{" "}
         <span className="text-brand-blue font-medium">{t.brandName}</span>
       </p>
